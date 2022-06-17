@@ -18,11 +18,7 @@ library(tidygam)
 eng_hist <- read_csv("data/eng_hist.csv")
 
 eng_filt <- eng_hist %>%
-  filter(Include == 1)
-
-eng_count <- eng_filt %>%
-  group_by(EnglishPeriod, TextId, Pentaset, Words) %>%
-  count() %>%
+  filter(Include == 1) %>%
   mutate(
     period = case_when(
       EnglishPeriod == "OE" ~ 1,
@@ -32,40 +28,32 @@ eng_count <- eng_filt %>%
     ),
     EnglishPeriod = factor(EnglishPeriod, levels = c("OE", "ME", "eModE", "lModE")),
     Pentaset = as.factor(Pentaset),
-    Author = sub("(-|\\.).*", "", TextId),
-    TextId = as.factor(TextId),
-    Author = as.factor(Author)
+    TextId = as.factor(TextId)
   )
 
-eng_count_date <- eng_filt %>%
-  group_by(Date, TextId, Pentaset, Words) %>%
-  count() %>%
-  mutate(
-    Pentaset = as.factor(Pentaset),
-    Author = sub("(-|\\.).*", "", TextId),
-    TextId = as.factor(TextId),
-    Author = as.factor(Author)
-  )
+eng_count <- eng_filt %>%
+  group_by(EnglishPeriod, period, TextId, Pentaset, Words) %>%
+  count()
 ```
 
 # Data checks
 
 ```{r check}
-table(is.na(eng_hist$Author))
+table(is.na(eng_hist$TextId))
 table(is.na(eng_hist$Pentaset))
 ```
 
 ```{r na}
-table(is.na(eng_filt$Author))
+table(is.na(eng_filt$TextId))
 table(is.na(eng_filt$Pentaset))
 ```
 
 ```{r counts}
-eng_hist %>%
+eng_filt %>%
   count(EnglishPeriod)
-eng_hist %>%
+eng_filt %>%
   count(Pentaset)
-eng_hist %>%
+eng_filt %>%
   count(EnglishPeriod, Pentaset)
 ```
 
@@ -78,10 +66,16 @@ eng_filt %>%
   geom_bar()
 eng_filt %>%
   ggplot(aes(EnglishPeriod, fill = Pentaset)) +
-  geom_bar()
+  geom_bar() +
+  scale_fill_brewer(palette = "Set1")
 eng_filt %>%
   ggplot(aes(EnglishPeriod, fill = Pentaset)) +
-  geom_bar(position = "dodge")
+  geom_bar(position = "fill") +
+  scale_fill_brewer(palette = "Set1")
+eng_filt %>%
+  ggplot(aes(EnglishPeriod, fill = Pentaset)) +
+  geom_bar(position = "dodge") +
+  scale_fill_brewer(palette = "Set1")
 ```
 
 ```{r plot}
@@ -105,10 +99,11 @@ if (file.exists("./data/cache/gam_1.rds")) {
   gam_1 <- bam(
     n ~
       s(period, by = Pentaset, k = 3) +
-      s(period, Author, bs = "fs", m = 1, k = 3) +
+      s(period, TextId, bs = "fs", m = 1, k = 3) +
       offset(log(Words/100000)),
     data = eng_count,
-    family = poisson
+    family = poisson,
+    discrete = TRUE
   )
   saveRDS(gam_1, "./data/cache/gam_1.rds")
 }
@@ -119,7 +114,7 @@ if (file.exists("./data/cache/gam_1.rds")) {
 predict_gam(
   gam_1, series = "period",
   values = c("Words" = 1e+5),
-  exclude_terms = "s(period,Author)",
+  exclude_terms = "s(period,TextId)",
   length_out = 50, tran_fun = exp
 ) %>%
   plot(comparison = "Pentaset") +
@@ -133,34 +128,3 @@ predict_gam(
 ggsave("img/period-penta.png", width = 7, height = 5)
 ```
 
-```{r gam-2}
-if (file.exists("./data/cache/gam_2.rds")) {
-  gam_2 <- readRDS("./data/cache/gam_2.rds")
-} else {
-  gam_2 <- bam(
-    n ~
-      s(Date, by = Pentaset, k = 3) +
-      s(Date, Author, bs = "fs", m = 1, k = 3) +
-      offset(log(Words/100000)),
-    data = eng_count_date,
-    family = poisson
-  )
-  saveRDS(gam_2, "./data/cache/gam_2.rds")
-}
-
-```
-
-```{r gam-2-pred}
-predict_gam(
-  gam_2, series = "Date",
-  values = c("Words" = 1e+5),
-  exclude_terms = "s(Date,Author)",
-  length_out = 50, tran_fun = exp
-) %>%
-  plot(comparison = "Pentaset") +
-  scale_color_brewer(type = "qual", palette = "Set1") +
-  scale_fill_brewer(type = "qual", palette = "Set1") +
-  labs(
-    y = "PP count per 100k words" 
-  )
-```
