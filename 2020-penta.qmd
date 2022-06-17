@@ -27,7 +27,7 @@ eng_filt <- eng_hist %>%
       EnglishPeriod == "lModE" ~ 4
     ),
     EnglishPeriod = factor(EnglishPeriod, levels = c("OE", "ME", "eModE", "lModE")),
-    Pentaset = as.factor(Pentaset),
+    Pentaset = factor(Pentaset, levels = c("Identity", "Inferred", "Assumed", "Inert", "New")),
     TextId = as.factor(TextId)
   )
 
@@ -98,6 +98,7 @@ if (file.exists("./data/cache/gam_1.rds")) {
 } else {
   gam_1 <- bam(
     n ~
+      Pentaset +
       s(period, by = Pentaset, k = 3) +
       s(period, TextId, bs = "fs", m = 1, k = 3) +
       offset(log(Words/100000)),
@@ -107,7 +108,6 @@ if (file.exists("./data/cache/gam_1.rds")) {
   )
   saveRDS(gam_1, "./data/cache/gam_1.rds")
 }
-
 ```
 
 ```{r gam-1-pred}
@@ -118,13 +118,13 @@ predict_gam(
   length_out = 50, tran_fun = exp
 ) %>%
   plot(comparison = "Pentaset") +
+  geom_vline(xintercept = c(1:4), linetype = "dotted") +
   scale_color_brewer(type = "qual", palette = "Set1") +
   scale_fill_brewer(type = "qual", palette = "Set1") +
-  scale_x_continuous(labels = c("OE", "ME", "eModE", "lModE")) +
+  scale_x_continuous(labels = c("OE", "ME", "eModE", "lModE"), minor_breaks = NULL) +
   labs(
-    y = "PP count per 100k words" 
+    y = "Number of PP per 100k words" 
   )
 
 ggsave("img/period-penta.png", width = 7, height = 5)
 ```
-
