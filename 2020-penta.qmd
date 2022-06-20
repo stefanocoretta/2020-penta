@@ -36,7 +36,7 @@ eng_count <- eng_filt %>%
   count()
 ```
 
-# Data checks
+## Data checks
 
 ```{r check}
 table(is.na(eng_hist$TextId))
@@ -128,3 +128,9 @@ predict_gam(
 
 ggsave("img/period-penta.png", width = 7, height = 5)
 ```
+
+## Write up
+
+We fitted a generalised additive mixed-effects model to the number of prepositional phrases, using a Poisson distribution. We included the following terms (in parentheses, an explanation of how the term contributes to the model): Pentaset (Identity, Inferred, Assumed, Inert, New), as a parametric term (average number of prepositional phrases according to Pentaset), a smooth over Period (OE, ME, eModE, lModE) by Pentaset (change in number of prepositional phrases over Period by Pentaset), and a by-text factor smooth over period (to account for variations between texts). An offset term was also included to account for the fact that length (in words) differed across texts. The reported estimates are the number of prepositional phrases assuming a text length of 100k words.
+
+The number of Identity PPs decreases from Old English to Late Modern English, while Inferred PPs show a less pronounced increase, especially after Middle English. The number of Inert PPs seems to decrease from Old to Middle English, while it increases again by Late Modern English. The opposite pattern can be observed in the New PPs: after increasing from Old to Middle English, they decrease again by Late Modern English. Assumed PPs are overall less frequent and don't show clear patterns of change through time, perhaps with the exception of a small increase between Early and Late Modern English.
