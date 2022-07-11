@@ -28,11 +28,26 @@ eng_filt <- eng_hist %>%
     ),
     EnglishPeriod = factor(EnglishPeriod, levels = c("OE", "ME", "eModE", "lModE")),
     Pentaset = factor(Pentaset, levels = c("Identity", "Inferred", "Assumed", "Inert", "New")),
-    TextId = as.factor(TextId)
+    TextId = as.factor(TextId),
+    cent = ifelse(
+      str_length(Date) == 3,
+      str_sub(Date, 1, 1),
+      str_sub(Date, 1, 2)
+    ) %>% as.numeric() + 1,
+    genre = str_to_lower(Genre) %>%
+      str_sub(1, 3)
   )
 
 eng_count <- eng_filt %>%
   group_by(EnglishPeriod, period, TextId, Pentaset, Words) %>%
+  count()
+
+eng_count_date <- eng_filt %>%
+  group_by(cent, TextId, Pentaset, Words) %>%
+  count()
+
+eng_count_genre <- eng_filt %>%
+  group_by(EnglishPeriod, period, TextId, Pentaset, Words, genre) %>%
   count()
 ```
 
@@ -90,7 +105,37 @@ eng_count %>%
   facet_wrap(~ Pentaset)
 ```
 
+```{r genre}
+eng_filt %>%
+  group_by(genre, Pentaset) %>%
+  summarise(
+    words = sum(Words),
+    n = cumsum(n()),
+    n_rel = n/words,
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(Pentaset, n_rel, fill = Pentaset)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(genre ~.)
+```
+
+```{r obj-type}
+eng_filt %>%
+  group_by(ft_objNP_type, Pentaset) %>%
+  summarise(
+    words = sum(Words),
+    n = cumsum(n()),
+    n_rel = n/words,
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(Pentaset, n_rel, fill = Pentaset)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(ft_objNP_type ~.)
+```
+
 ## GAMs
+
+### Period and Pentaset
 
 ```{r gam-1}
 if (file.exists("./data/cache/gam_1.rds")) {
@@ -100,7 +145,7 @@ if (file.exists("./data/cache/gam_1.rds")) {
     n ~
       Pentaset +
       s(period, by = Pentaset, k = 3) +
-      s(period, TextId, bs = "fs", m = 1, k = 3) +
+      s(TextId, bs = "re", m = 1) +
       offset(log(Words/100000)),
     data = eng_count,
     family = poisson,
@@ -114,7 +159,7 @@ if (file.exists("./data/cache/gam_1.rds")) {
 predict_gam(
   gam_1, series = "period",
   values = c("Words" = 1e+5),
-  exclude_terms = "s(period,TextId)",
+  exclude_terms = "s(TextId)",
   length_out = 50, tran_fun = exp
 ) %>%
   plot(comparison = "Pentaset") +
@@ -129,8 +174,45 @@ predict_gam(
 ggsave("img/period-penta.png", width = 7, height = 5)
 ```
 
-## Write up
-
 We fitted a generalised additive mixed-effects model to the number of prepositional phrases, using a Poisson distribution. We included the following terms (in parentheses, an explanation of how the term contributes to the model): Pentaset (Identity, Inferred, Assumed, Inert, New), as a parametric term (average number of prepositional phrases according to Pentaset), a smooth over Period (OE, ME, eModE, lModE) by Pentaset (change in number of prepositional phrases over Period by Pentaset), and a by-text factor smooth over period (to account for variations between texts). An offset term was also included to account for the fact that length (in words) differed across texts. The reported estimates are the number of prepositional phrases assuming a text length of 100k words.
 
 The number of Identity PPs decreases from Old English to Late Modern English, while Inferred PPs show a less pronounced increase, especially after Middle English. The number of Inert PPs seems to decrease from Old to Middle English, while it increases again by Late Modern English. The opposite pattern can be observed in the New PPs: after increasing from Old to Middle English, they decrease again by Late Modern English. Assumed PPs are overall less frequent and don't show clear patterns of change through time, perhaps with the exception of a small increase between Early and Late Modern English.
+
+### Date and Pentaset
+
+```{r gam-2}
+if (file.exists("./data/cache/gam_2.rds")) {
+  gam_2 <- readRDS("./data/cache/gam_2.rds")
+} else {
+  gam_2 <- bam(
+    n ~
+      Pentaset +
+      s(cent, by = Pentaset, k = 4) +
+      s(TextId, bs = "re", m = 1) +
+      offset(log(Words/100000)),
+    data = eng_count_date,
+    family = poisson,
+    discrete = TRUE
+  )
+  saveRDS(gam_2, "./data/cache/gam_2.rds")
+}
+```
+
+```{r gam-2-pred}
+predict_gam(
+  gam_2, series = "cent",
+  values = c("Words" = 1e+5),
+  exclude_terms = "s(TextId)",
+  length_out = 50, tran_fun = exp
+) %>%
+  plot(comparison = "Pentaset") +
+  scale_color_brewer(type = "qual", palette = "Set1") +
+  scale_fill_brewer(type = "qual", palette = "Set1") +
+  labs(
+    y = "Number of PP per 100k words" 
+  )
+
+ggsave("img/cent-penta.png", width = 7, height = 5)
+```
+
+### 
