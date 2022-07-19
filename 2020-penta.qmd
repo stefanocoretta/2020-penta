@@ -49,6 +49,27 @@ eng_count_date <- eng_filt %>%
 eng_count_genre <- eng_filt %>%
   group_by(EnglishPeriod, period, TextId, Pentaset, Words, genre) %>%
   count()
+
+preps <- c("after", "at", "about", "among", "before", "between", "binnan", "by", "for", "from", "mid", "of", "on", "through", "till", "to", "upon", "without")
+
+eng_preps <- eng_filt %>%
+  mutate(
+    ft_p_text = case_when(
+      ft_p_text == "ymbe" ~ "about",
+      ft_p_text == "ymben" ~ "about",
+      ft_p_text == "vmben" ~ "about",
+      ft_p_text == "ere" ~ "before",
+      ft_p_text == "in" ~ "binnan",
+      ft_p_text == "within" ~ "binnan",
+      ft_p_text == "with" ~ "mid",
+      ft_p_text == "until" ~ "till",
+      ft_p_text == "unto" ~ "to",
+      TRUE ~ ft_p_text
+    )
+  ) %>%
+  filter(
+    ft_p_text %in% preps
+  )
 ```
 
 ## Data checks
@@ -131,6 +152,20 @@ eng_filt %>%
   ggplot(aes(Pentaset, n_rel, fill = Pentaset)) +
   geom_bar(stat = "identity") +
   facet_wrap(ft_objNP_type ~.)
+```
+
+```{r preps}
+eng_preps %>%
+  group_by(ft_p_text, Pentaset) %>%
+  summarise(
+    words = sum(Words),
+    n = cumsum(n()),
+    n_rel = n/words,
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(Pentaset, n_rel, fill = Pentaset)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(ft_p_text ~.)
 ```
 
 ## GAMs
