@@ -156,16 +156,17 @@ eng_filt %>%
 
 ```{r preps}
 eng_preps %>%
-  group_by(ft_p_text, Pentaset) %>%
-  summarise(
-    words = sum(Words),
-    n = cumsum(n()),
-    n_rel = n/words,
-    .groups = "drop"
-  ) %>%
-  ggplot(aes(Pentaset, n_rel, fill = Pentaset)) +
-  geom_bar(stat = "identity") +
-  facet_wrap(ft_p_text ~.)
+  ggplot(aes(EnglishPeriod, fill = EnglishPeriod)) +
+  geom_bar() +
+  facet_grid(Pentaset ~ ft_p_text)
+```
+
+```{r preps-ident-period}
+eng_preps %>%
+  filter(Pentaset == "Identity") %>%
+  ggplot(aes(EnglishPeriod, fill = EnglishPeriod)) +
+  geom_bar() +
+  facet_wrap(~ ft_p_text)
 ```
 
 ## GAMs
