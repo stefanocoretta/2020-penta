@@ -163,10 +163,29 @@ eng_preps %>%
 
 ```{r preps-ident-period}
 eng_preps %>%
-  filter(Pentaset == "Identity") %>%
+  filter(
+    Pentaset == "Identity",
+    ft_p_text %in% c("after", "at", "between", "binnan", "by", "for", "from", "mid", "of", "on", "through", "to")
+  ) %>%
+  mutate(
+    preposition = case_when(
+      ft_p_text == "binnan" ~ "in",
+      ft_p_text == "mid" ~ "with",
+      TRUE ~ ft_p_text
+    )
+  ) %>%
   ggplot(aes(EnglishPeriod, fill = EnglishPeriod)) +
   geom_bar() +
-  facet_wrap(~ ft_p_text)
+  facet_wrap(~ preposition) +
+  labs(
+    x = "English period"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 0.5),
+    legend.position = "none"
+  )
+
+ggsave("img/prep-period.png", width = 7, height = 5)
 ```
 
 ## GAMs
