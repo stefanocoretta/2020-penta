@@ -1,5 +1,6 @@
 ---
-title: "2020-penta"
+title: "The decline of local anchoring: A quantitative investigation"
+author: "Bettelou Los, Gea Dreschler, Ans van Kemenade, Erwin Komen, Stefano Coretta"
 ---
 
 ## Packages
@@ -233,7 +234,7 @@ We fitted a generalised additive mixed-effects model to the number of prepositio
 
 The number of Identity PPs decreases from Old English to Late Modern English, while Inferred PPs show a less pronounced increase, especially after Middle English. The number of Inert PPs seems to decrease from Old to Middle English, while it increases again by Late Modern English. The opposite pattern can be observed in the New PPs: after increasing from Old to Middle English, they decrease again by Late Modern English. Assumed PPs are overall less frequent and don't show clear patterns of change through time, perhaps with the exception of a small increase between Early and Late Modern English.
 
-### Date and Pentaset
+### Century and Pentaset
 
 ```{r gam-2}
 if (file.exists("./data/cache/gam_2.rds")) {
@@ -270,4 +271,6 @@ predict_gam(
 ggsave("img/cent-penta.png", width = 7, height = 5)
 ```
 
-### 
+We fitted a generalised additive mixed-effects model to the number of prepositional phrases, using a Poisson distribution. We included the following terms (in parentheses, an explanation of how the term contributes to the model): Pentaset (Identity, Inferred, Assumed, Inert, New), as a parametric term (average number of prepositional phrases according to Pentaset), a smooth over Century by Pentaset (change in number of prepositional phrases over Period by Pentaset), and a by-text factor smooth over period (to account for variations between texts). An offset term was also included to account for the fact that length (in words) differed across texts. The reported estimates are the number of prepositional phrases assuming a text length of 100k words.
+
+The results are virtually identical to the model fitted with English Period. The number of Identity PPs decreases from Old English to Late Modern English, while Inferred PPs show a less pronounced increase, especially after Middle English. The number of Inert PPs seems to decrease from Old to Middle English, while it increases again by Late Modern English. The opposite pattern can be observed in the New PPs: after increasing from Old to Middle English, they decrease again by Late Modern English. Assumed PPs are overall less frequent and don't show clear patterns of change through time, perhaps with the exception of a small increase between Early and Late Modern English.
