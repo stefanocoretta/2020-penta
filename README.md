@@ -4,4 +4,4 @@ This is the repository for the paper *The decline of local anchoring: A quantita
 
 The file `2020-penta.qmd` contains the GAM analyses discussed in the paper.
 
-To see a rendered version of this file, please go to: ...
+To see a rendered version of this file, please go to: https://stefanocoretta.github.io/2020-penta/
