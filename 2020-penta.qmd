@@ -255,17 +255,33 @@ if (file.exists("./data/cache/gam_2.rds")) {
 ```
 
 ```{r gam-2-pred}
-predict_gam(
+# predict_gam(
+#   gam_2, series = "cent",
+#   values = c("Words" = 1e+5),
+#   exclude_terms = "s(TextId)",
+#   length_out = 50, tran_fun = exp
+# ) %>%
+#   plot(comparison = "Pentaset") +
+#   scale_color_brewer(type = "qual", palette = "Set1") +
+#   scale_fill_brewer(type = "qual", palette = "Set1") +
+#   labs(
+#     y = "Number of PP per 100k words" 
+#   )
+
+gam_2_pred <- predict_gam(
   gam_2, series = "cent",
   values = c("Words" = 1e+5),
   exclude_terms = "s(TextId)",
   length_out = 50, tran_fun = exp
-) %>%
-  plot(comparison = "Pentaset") +
-  scale_color_brewer(type = "qual", palette = "Set1") +
-  scale_fill_brewer(type = "qual", palette = "Set1") +
+)
+
+gam_2_pred %>%
+  ggplot(aes(cent, n)) +
+  geom_ribbon(aes(ymin = lower_ci, ymax = upper_ci, fill = Pentaset), alpha = 0.5) +
+  geom_line(aes(colour = Pentaset)) +
   labs(
-    y = "Number of PP per 100k words" 
+    x = "Century",
+    y = "Number of PP per 100k words"
   )
 
 ggsave("img/cent-penta.png", width = 7, height = 5)
