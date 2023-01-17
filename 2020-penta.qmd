@@ -11,6 +11,7 @@ library(tidyverse)
 theme_set(theme_light())
 library(mgcv)
 library(tidygam)
+library(lemon)
 ```
 
 ## Read data
@@ -177,7 +178,7 @@ eng_preps %>%
   ) %>%
   ggplot(aes(EnglishPeriod, fill = EnglishPeriod)) +
   geom_bar() +
-  facet_wrap(~ preposition) +
+  facet_rep_wrap(~ preposition, repeat.tick.labels = TRUE) +
   labs(
     x = "English period"
   ) +
